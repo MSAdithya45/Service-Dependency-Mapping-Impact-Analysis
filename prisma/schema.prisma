@@ -1,0 +1,141 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model dependencies {
+  id                                                BigInt         @id @default(autoincrement())
+  workspace_id                                      BigInt
+  version_id                                        BigInt
+  source_service_id                                 BigInt
+  target_service_id                                 BigInt
+  created_at                                        DateTime?      @default(now()) @db.Timestamp(0)
+  services_dependencies_source_service_idToservices services       @relation("dependencies_source_service_idToservices", fields: [source_service_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_dep_source")
+  services_dependencies_target_service_idToservices services       @relation("dependencies_target_service_idToservices", fields: [target_service_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_dep_target")
+  graph_versions                                    graph_versions @relation(fields: [version_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_dep_version")
+  workspaces                                        workspaces     @relation(fields: [workspace_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_dep_workspace")
+
+  @@index([target_service_id], map: "fk_dep_target")
+  @@index([version_id], map: "fk_dep_version")
+  @@index([source_service_id], map: "idx_source_service")
+  @@index([workspace_id, version_id], map: "idx_workspace_version")
+}
+
+model domains {
+  id                BigInt              @id @default(autoincrement())
+  domain_name       String              @db.VarChar(150)
+  lead_user_id      BigInt
+  created_at        DateTime?           @default(now()) @db.Timestamp(0)
+  users             users               @relation(fields: [lead_user_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_domain_lead")
+  services          services[]
+  workspace_members workspace_members[]
+
+  @@index([lead_user_id], map: "fk_domain_lead")
+}
+
+model graph_versions {
+  id             BigInt           @id @default(autoincrement())
+  workspace_id   BigInt
+  version_no     Int
+  created_by     BigInt
+  created_at     DateTime?        @default(now()) @db.Timestamp(0)
+  dependencies   dependencies[]
+  users          users            @relation(fields: [created_by], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_graph_creator")
+  workspaces     workspaces       @relation(fields: [workspace_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_graph_workspace")
+  impact_reports impact_reports[]
+
+  @@index([created_by], map: "fk_graph_creator")
+  @@index([workspace_id], map: "fk_graph_workspace")
+}
+
+model impact_reports {
+  id                      BigInt         @id @default(autoincrement())
+  workspace_id            BigInt
+  root_service_id         BigInt
+  version_id              BigInt
+  affected_services_count Int
+  affected_domains_count  Int
+  severity_score          Int
+  generated_at            DateTime?      @default(now()) @db.Timestamp(0)
+  services                services       @relation(fields: [root_service_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_report_service")
+  graph_versions          graph_versions @relation(fields: [version_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_report_version")
+  workspaces              workspaces     @relation(fields: [workspace_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_report_workspace")
+
+  @@index([root_service_id], map: "fk_report_service")
+  @@index([version_id], map: "fk_report_version")
+  @@index([workspace_id], map: "fk_report_workspace")
+}
+
+model services {
+  id                                                    BigInt           @id @default(autoincrement())
+  workspace_id                                          BigInt
+  domain_id                                             BigInt
+  service_name                                          String           @db.VarChar(150)
+  status                                                String           @db.VarChar(50)
+  created_at                                            DateTime?        @default(now()) @db.Timestamp(0)
+  dependencies_dependencies_source_service_idToservices dependencies[]   @relation("dependencies_source_service_idToservices")
+  dependencies_dependencies_target_service_idToservices dependencies[]   @relation("dependencies_target_service_idToservices")
+  impact_reports                                        impact_reports[]
+  domains                                               domains          @relation(fields: [domain_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_service_domain")
+  workspaces                                            workspaces       @relation(fields: [workspace_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_service_workspace")
+
+  @@index([domain_id], map: "fk_service_domain")
+  @@index([workspace_id], map: "fk_service_workspace")
+}
+
+model users {
+  id                BigInt              @id @default(autoincrement())
+  name              String              @db.VarChar(100)
+  email             String              @unique(map: "email") @db.VarChar(255)
+  password_hash     String              @db.VarChar(255)
+  created_at        DateTime?           @default(now()) @db.Timestamp(0)
+  domains           domains[]
+  graph_versions    graph_versions[]
+  workspace_members workspace_members[]
+  workspaces        workspaces[]
+}
+
+model workspace_members {
+  workspace_id BigInt
+  domain_id    BigInt
+  user_id      BigInt
+  role         workspace_members_role
+  joined_at    DateTime?              @default(now()) @db.Timestamp(0)
+  domains      domains                @relation(fields: [domain_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_wm_domain")
+  users        users                  @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_wm_user")
+  workspaces   workspaces             @relation(fields: [workspace_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_wm_workspace")
+
+  @@id([workspace_id, domain_id, user_id])
+  @@index([domain_id], map: "fk_wm_domain")
+  @@index([user_id], map: "fk_wm_user")
+}
+
+model workspaces {
+  id                BigInt                    @id @default(autoincrement())
+  workspace_name    String                    @db.VarChar(150)
+  owner_user_id     BigInt
+  workspace_type    workspaces_workspace_type
+  created_at        DateTime?                 @default(now()) @db.Timestamp(0)
+  dependencies      dependencies[]
+  graph_versions    graph_versions[]
+  impact_reports    impact_reports[]
+  services          services[]
+  workspace_members workspace_members[]
+  users             users                     @relation(fields: [owner_user_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_workspace_owner")
+
+  @@index([owner_user_id], map: "fk_workspace_owner")
+}
+
+enum workspace_members_role {
+  LEAD
+  DEVELOPER
+}
+
+enum workspaces_workspace_type {
+  TEAM
+  PERSONAL
+}
