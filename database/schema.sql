@@ -45,6 +45,8 @@ CREATE TABLE domains (
 
     domain_name VARCHAR(150) NOT NULL,
 
+    workspace_id  BigInt NOT NULL,
+
     lead_user_id BIGINT NOT NULL,
 
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -102,6 +104,8 @@ CREATE TABLE services (
 
     domain_id BIGINT NOT NULL,
 
+    version_id BIGINT NOT NULL,
+
     service_name VARCHAR(150) NOT NULL,
 
     status VARCHAR(50) NOT NULL,
@@ -115,6 +119,10 @@ CREATE TABLE services (
     CONSTRAINT fk_service_domain
         FOREIGN KEY (domain_id)
         REFERENCES domains(id)
+    
+    CONSTRAINT fk_service_version
+        FOREIGN KEY (version_id)
+        REFERENCES graph_versions(id)
 
 ) ENGINE=InnoDB;
 

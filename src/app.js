@@ -1,26 +1,47 @@
-require('dotenv').config();
+const express =
+require("express");
 
-const express = require('express');
-const cors = require('cors');
+const app =
+express();
 
-const authRoutes = require('./routes/auth.routes');
+app.use(
+    express.json()
+);
 
-const workspaceRoutes = require('./routes/workspace.routes');
-const app = express();
+const authRoutes =
+require("./routes/auth.routes");
 
-app.use(cors());
+const workspaceRoutes =
+require("./routes/workspace.routes");
 
+const domainRoutes =
+require("./routes/domain.routes");
 
-app.use(express.json());
+app.use(
+    "/api/auth",
+    authRoutes
+);
 
+app.use(
+    "/api/workspaces",
+    workspaceRoutes
+);
 
-app.use('/api/workspaces', workspaceRoutes);
+app.use(
+    "/api/domains",
+    domainRoutes
+);
 
-
-app.use('/api/auth', authRoutes);
-
-const PORT = process.env.PORT || 5000;
+const PORT =
+process.env.PORT || 5000;
 
 app.listen(PORT, () => {
-    console.log(`Server running on ${PORT}`);
-}); 
+
+    console.log(
+        `Server running on port ${PORT}`
+    );
+
+});
+
+
+module.exports = app;

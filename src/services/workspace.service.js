@@ -33,22 +33,62 @@ async function createWorkspace(
 
     }
 
-    await prisma.workspaces.create({
+    const existingWorkspace =
+    await prisma.workspaces.findFirst({
 
-        data:{
-
-            workspace_name:
-            workspace_name,
-
-            workspace_type:
-            workspace_type,
+        where: {
 
             owner_user_id:
-            userId
+            userId,
+
+            workspace_name:
+            workspace_name
 
         }
 
     });
+
+    if(existingWorkspace){
+
+        throw new Error(
+            "Workspace name already exists. Please choose another workspace name."
+        );
+
+    }
+
+    try{
+
+        await prisma.workspaces.create({
+
+            data:{
+
+                workspace_name:
+                workspace_name,
+
+                workspace_type:
+                workspace_type,
+
+                owner_user_id:
+                userId
+
+            }
+
+        });
+
+    }
+    catch(error){
+
+        if(error.code === "P2002"){
+
+            throw new Error(
+                "Workspace name already exists. Please choose another workspace name."
+            );
+
+        }
+
+        throw error;
+
+    }
 
     return {
 

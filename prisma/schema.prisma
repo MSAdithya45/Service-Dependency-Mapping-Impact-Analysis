@@ -28,13 +28,16 @@ model dependencies {
 model domains {
   id                BigInt              @id @default(autoincrement())
   domain_name       String              @db.VarChar(150)
+  workspace_id      BigInt
   lead_user_id      BigInt
   created_at        DateTime?           @default(now()) @db.Timestamp(0)
   users             users               @relation(fields: [lead_user_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_domain_lead")
+  workspaces        workspaces          @relation(fields: [workspace_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_domain_workspace")
   services          services[]
   workspace_members workspace_members[]
 
   @@index([lead_user_id], map: "fk_domain_lead")
+  @@index([workspace_id], map: "fk_domain_workspace")
 }
 
 model graph_versions {
@@ -66,8 +69,8 @@ model impact_reports {
   workspaces              workspaces     @relation(fields: [workspace_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_report_workspace")
 
   @@index([root_service_id], map: "fk_report_service")
-  @@index([version_id], map: "fk_report_version")
   @@index([workspace_id], map: "fk_report_workspace")
+  @@index([version_id], map: "fk_report_version")
 }
 
 model services {
@@ -121,6 +124,7 @@ model workspaces {
   workspace_type    workspaces_workspace_type
   created_at        DateTime?                 @default(now()) @db.Timestamp(0)
   dependencies      dependencies[]
+  domains           domains[]
   graph_versions    graph_versions[]
   impact_reports    impact_reports[]
   services          services[]
