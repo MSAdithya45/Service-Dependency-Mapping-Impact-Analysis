@@ -413,6 +413,43 @@ async function deleteDomain(
 
 }
 
+async function getDomains(
+    workspaceId
+){
+
+    const domains =
+    await prisma.domains.findMany({
+
+        where:{
+
+            workspace_id:
+            Number(workspaceId)
+
+        },
+
+        select:{
+
+            id:true,
+
+            domain_name:true,
+
+            lead_user_id:true
+
+        },
+
+        orderBy:{
+
+            domain_name:
+            "asc"
+
+        }
+
+    });
+
+    return domains;
+
+}
+
 
 
 
@@ -423,6 +460,7 @@ module.exports = {
     createDomain,
     transferDomainLead,
     updateDomainName,
-    deleteDomain
+    deleteDomain,
+    getDomains
 
 };

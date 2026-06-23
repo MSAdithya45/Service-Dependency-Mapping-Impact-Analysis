@@ -25,6 +25,9 @@ require(
     "../controllers/domain.controller"
 );
 
+
+
+
 router.post(
     "/",
     authenticate,
@@ -53,5 +56,14 @@ router.delete(
     canModifyDomain,
     domainController.deleteDomain
 );
+
+
+router.get(
+    "/:workspaceId",
+    authenticate,
+    domainController.getDomains
+);
+
+
 
 module.exports = router;

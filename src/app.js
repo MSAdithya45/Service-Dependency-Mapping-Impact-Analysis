@@ -32,6 +32,14 @@ app.use(
     domainRoutes
 );
 
+const serviceRoutes =
+require("./routes/service.routes");
+
+app.use(
+    "/api/services",
+    serviceRoutes
+);
+
 const PORT =
 process.env.PORT || 5000;
 
