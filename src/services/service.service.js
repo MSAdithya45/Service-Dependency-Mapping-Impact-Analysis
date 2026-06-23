@@ -174,11 +174,119 @@ async function updateServiceName(
 }
 
 
+async function deleteService(
+    serviceId
+){
+
+    const service =
+    await prisma.services.findUnique({
+
+        where:{
+            id:Number(serviceId)
+        }
+
+    });
+
+    if(!service){
+
+        throw new Error(
+            "Service not found"
+        );
+
+    }
+
+    const dependency =
+    await prisma.dependencies.findFirst({
+
+        where:{
+
+            OR:[
+
+                {
+                    source_service_id:
+                    Number(serviceId)
+                },
+
+                {
+                    destination_service_id:
+                    Number(serviceId)
+                }
+
+            ]
+
+        }
+
+    });
+
+    if(dependency){
+
+        throw new Error(
+            "Cannot delete service. Dependencies exist."
+        );
+
+    }
+
+    await prisma.services.delete({
+
+        where:{
+            id:Number(serviceId)
+        }
+
+    });
+
+    return {
+
+        message:
+        "Service deleted successfully"
+
+    };
+
+}
+
+
+async function getServices(
+    domainId
+){
+
+    const services =
+    await prisma.services.findMany({
+
+        where:{
+
+            domain_id:
+            Number(domainId)
+
+        },
+
+        select:{
+
+            id:true,
+
+            service_name:true
+
+        },
+
+        orderBy:{
+
+            service_name:
+            "asc"
+
+        }
+
+    });
+
+    return services;
+
+}
+
+
 
 
 module.exports = {
 
     createService,
-    updateServiceName
+    updateServiceName,
+    deleteService,
+    getServices
 
 };

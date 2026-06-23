@@ -26,6 +26,16 @@ const {
 
 
 
+const {
+    canDeleteService
+} = require(
+    "../middleware/service-delete.middleware"
+);
+
+
+
+
+
 router.post(
     "/",
     authenticate,
@@ -33,11 +43,31 @@ router.post(
     serviceController.createService
 );
 
+router.get(
+    "/domain/:domainId",
+    authenticate,
+    serviceController.getServices
+);
+
+
 router.patch(
     "/:id/name",
     authenticate,
     canModifyService,
     serviceController.updateServiceName
 );
+
+
+router.delete(
+    "/:id",
+    authenticate,
+    canDeleteService,
+    serviceController.deleteService
+);
+
+
+
+
+
 
 module.exports = router;

@@ -64,3 +64,67 @@ async(req,res)=>{
     }
 
 };
+
+
+exports.deleteService =
+async(req,res)=>{
+
+    try{
+
+        const result =
+        await serviceService
+        .deleteService(
+            req.params.id
+        );
+
+        return res
+        .status(200)
+        .json(result);
+
+    }
+    catch(error){
+
+        return res
+        .status(400)
+        .json({
+
+            message:
+            error.message
+
+        });
+
+    }
+
+};
+
+
+exports.getServices =
+async(req,res)=>{
+
+    try{
+
+        const result =
+        await serviceService
+        .getServices(
+            req.params.domainId
+        );
+
+        return res
+        .status(200)
+        .json(result);
+
+    }
+    catch(error){
+
+        return res
+        .status(400)
+        .json({
+
+            message:
+            error.message
+
+        });
+
+    }
+
+};
