@@ -17,6 +17,16 @@ require("./routes/workspace.routes");
 const domainRoutes =
 require("./routes/domain.routes");
 
+
+
+const dependencyRoutes =
+require(
+    "./routes/dependency.routes"
+);
+
+
+
+
 app.use(
     "/api/auth",
     authRoutes
@@ -47,7 +57,10 @@ app.use(
     serviceRoutes
 );
 
-
+app.use(
+    "/api/dependencies",
+    dependencyRoutes
+);
 
 
 const PORT =
