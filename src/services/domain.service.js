@@ -452,6 +452,245 @@ async function getDomains(
 
 
 
+        
+async function changeDomainLead(
+    domainId,
+    data
+){
+
+    const {
+
+        new_lead_user_id,
+        keep_old_lead_as_developer
+
+    } = data;
+
+    if(
+
+        !new_lead_user_id
+
+    ){
+
+        throw new Error(
+            "New lead user id is required"
+        );
+
+    }
+
+    const domain =
+    await prisma.domains.findUnique({
+
+        where:{
+            id:Number(domainId)
+        }
+
+    });
+
+    if(!domain){
+
+        throw new Error(
+            "Domain not found"
+        );
+
+    }
+
+    const currentLeadId =
+    Number(
+        domain.lead_user_id
+    );
+
+    if(
+
+        currentLeadId ===
+        Number(new_lead_user_id)
+
+    ){
+
+        throw new Error(
+            "User is already the domain lead"
+        );
+
+    }
+
+    const member =
+    await prisma.workspace_members
+    .findFirst({
+
+        where:{
+
+            workspace_id:
+            Number(
+                domain.workspace_id
+            ),
+
+            domain_id:
+            Number(domainId),
+
+            user_id:
+            Number(
+                new_lead_user_id
+            )
+
+        }
+
+    });
+
+    if(!member){
+
+        throw new Error(
+            "User does not belong to this domain"
+        );
+
+    }
+
+    await prisma.$transaction(
+
+        async(tx)=>{
+
+            //--------------------------------
+            // NEW LEAD
+            //--------------------------------
+
+            await tx.workspace_members
+            .update({
+
+                where:{
+
+                    workspace_id_domain_id_user_id:{
+
+                        workspace_id:
+                        Number(
+                            domain.workspace_id
+                        ),
+
+                        domain_id:
+                        Number(domainId),
+
+                        user_id:
+                        Number(
+                            new_lead_user_id
+                        )
+
+                    }
+
+                },
+
+                data:{
+
+                    role:
+                    "LEAD"
+
+                }
+
+            });
+
+            //--------------------------------
+            // OLD LEAD
+            //--------------------------------
+
+            if(
+                keep_old_lead_as_developer
+            ){
+
+                await tx.workspace_members
+                .update({
+
+                    where:{
+
+                        workspace_id_domain_id_user_id:{
+
+                            workspace_id:
+                            Number(
+                                domain.workspace_id
+                            ),
+
+                            domain_id:
+                            Number(domainId),
+
+                            user_id:
+                            currentLeadId
+
+                        }
+
+                    },
+
+                    data:{
+
+                        role:
+                        "DEVELOPER"
+
+                    }
+
+                });
+
+            }
+            else{
+
+                await tx.workspace_members
+                .delete({
+
+                    where:{
+
+                        workspace_id_domain_id_user_id:{
+
+                            workspace_id:
+                            Number(
+                                domain.workspace_id
+                            ),
+
+                            domain_id:
+                            Number(domainId),
+
+                            user_id:
+                            currentLeadId
+
+                        }
+
+                    }
+
+                });
+
+            }
+
+            //--------------------------------
+            // UPDATE DOMAIN TABLE
+            //--------------------------------
+
+            await tx.domains.update({
+
+                where:{
+                    id:Number(domainId)
+                },
+
+                data:{
+
+                    lead_user_id:
+                    Number(
+                        new_lead_user_id
+                    )
+
+                }
+
+            });
+
+        }
+
+    );
+
+    return {
+
+        message:
+        "Domain lead updated successfully"
+
+    };
+
+}
+
+
+
+
+
+
 
 
 
@@ -461,6 +700,7 @@ module.exports = {
     transferDomainLead,
     updateDomainName,
     deleteDomain,
-    getDomains
+    getDomains,
+    changeDomainLead
 
 };

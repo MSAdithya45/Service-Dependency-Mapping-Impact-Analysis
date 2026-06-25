@@ -99,10 +99,24 @@ async function createWorkspace(
 
 }
 
-
 async function getWorkspaces(
     userId
 ){
+
+    const personalWorkspaces =
+    await prisma.workspaces.findMany({
+
+        where:{
+
+            owner_user_id:
+            userId,
+
+            workspace_type:
+            "PERSONAL"
+
+        }
+
+    });
 
     const memberships =
     await prisma.workspace_members.findMany({
@@ -117,120 +131,30 @@ async function getWorkspaces(
 
     });
 
-    const workspaces =
-    memberships.map(
+    const teamWorkspaces =
+    memberships
+    .map(
 
-        member => member.workspaces
+        member =>
+        member.workspaces
+
+    )
+    .filter(
+
+        workspace =>
+
+        workspace.workspace_type ===
+        "TEAM"
 
     );
 
     return {
 
         PERSONAL:
-
-        workspaces.filter(
-
-            workspace =>
-
-            workspace.workspace_type ===
-            "PERSONAL"
-
-        ),
+        personalWorkspaces,
 
         TEAM:
-
-        workspaces.filter(
-
-            workspace =>
-
-            workspace.workspace_type ===
-            "TEAM"
-
-        )
-
-    };
-
-}
-
-
-async function updateWorkspaceName(
-    workspaceId,
-    data
-){
-
-    const {
-        workspace_name
-    } = data;
-
-    if(!workspace_name){
-
-        throw new Error(
-            "Workspace name is required"
-        );
-
-    }
-
-    const workspace =
-    await prisma.workspaces.findUnique({
-
-        where:{
-            id:Number(workspaceId)
-        }
-
-    });
-
-    if(!workspace){
-
-        throw new Error(
-            "Workspace not found"
-        );
-
-    }
-
-    const existingWorkspace =
-    await prisma.workspaces.findFirst({
-
-        where:{
-
-            owner_user_id:
-            workspace.owner_user_id,
-
-            workspace_name:
-            workspace_name,
-
-            NOT:{
-                id:Number(workspaceId)
-            }
-
-        }
-
-    });
-
-    if(existingWorkspace){
-
-        throw new Error(
-            "Workspace name already exists"
-        );
-
-    }
-
-    await prisma.workspaces.update({
-
-        where:{
-            id:Number(workspaceId)
-        },
-
-        data:{
-
-            workspace_name
-        }
-
-    });
-
-    return {
-
-        message:
-        "Workspace updated successfully"
+        teamWorkspaces
 
     };
 
@@ -467,6 +391,440 @@ async function updatePersonalWorkspaceName(
 }
 
 
+
+
+
+async function cloneWorkspaceToPersonal(
+    workspaceId,
+    userId
+){
+
+    workspaceId =
+    Number(workspaceId);
+
+    return await prisma.$transaction(
+
+        async(tx)=>{
+
+            //------------------------------------------------
+            // GET TEAM WORKSPACE
+            //------------------------------------------------
+
+            const workspace =
+            await tx.workspaces.findUnique({
+
+                where:{
+                    id:workspaceId
+                }
+
+            });
+
+            if(!workspace){
+
+                throw new Error(
+                    "Workspace not found"
+                );
+
+            }
+
+            if(
+                workspace.workspace_type !==
+                "TEAM"
+            ){
+
+                throw new Error(
+                    "Only TEAM workspaces can be cloned"
+                );
+
+            }
+
+            //------------------------------------------------
+            // PERSONAL WORKSPACE NAME
+            //------------------------------------------------
+
+            const personalWorkspaceName =
+
+                `${workspace.workspace_name} - Personal`;
+
+            //------------------------------------------------
+            // DELETE OLD PERSONAL CLONE IF EXISTS
+            //------------------------------------------------
+
+            const existingWorkspace =
+            await tx.workspaces.findFirst({
+
+                where:{
+
+                    owner_user_id:
+                    userId,
+
+                    workspace_name:
+                    personalWorkspaceName,
+
+                    workspace_type:
+                    "PERSONAL"
+
+                }
+
+            });
+
+            if(existingWorkspace){
+
+                await tx.dependencies.deleteMany({
+
+                    where:{
+
+                        workspace_id:
+                        existingWorkspace.id
+
+                    }
+
+                });
+
+                await tx.services.deleteMany({
+
+                    where:{
+
+                        workspace_id:
+                        existingWorkspace.id
+
+                    }
+
+                });
+
+                await tx.domains.deleteMany({
+
+                    where:{
+
+                        workspace_id:
+                        existingWorkspace.id
+
+                    }
+
+                });
+
+                await tx.workspaces.delete({
+
+                    where:{
+
+                        id:
+                        existingWorkspace.id
+
+                    }
+
+                });
+
+            }
+
+            //------------------------------------------------
+            // CREATE PERSONAL WORKSPACE
+            //------------------------------------------------
+
+            const newWorkspace =
+            await tx.workspaces.create({
+
+                data:{
+
+                    workspace_name:
+                    personalWorkspaceName,
+
+                    workspace_type:
+                    "PERSONAL",
+
+                    owner_user_id:
+                    userId
+
+                }
+
+            });
+
+            //------------------------------------------------
+            // CLONE DOMAINS
+            //------------------------------------------------
+
+            const domains =
+            await tx.domains.findMany({
+
+                where:{
+
+                    workspace_id:
+                    workspaceId
+
+                }
+
+            });
+
+            const domainMap =
+            new Map();
+
+            for(
+                const domain
+                of domains
+            ){
+
+                const newDomain =
+                await tx.domains.create({
+
+                    data:{
+
+                        workspace_id:
+                        newWorkspace.id,
+
+                        domain_name:
+                        domain.domain_name,
+
+                        lead_user_id:
+                        userId
+
+                    }
+
+                });
+
+                domainMap.set(
+
+                    Number(domain.id),
+
+                    Number(newDomain.id)
+
+                );
+
+            }
+
+            //------------------------------------------------
+            // CLONE SERVICES
+            //------------------------------------------------
+
+            const services =
+            await tx.services.findMany({
+
+                where:{
+
+                    workspace_id:
+                    workspaceId
+
+                }
+
+            });
+
+            const serviceMap =
+            new Map();
+
+            for(
+                const service
+                of services
+            ){
+
+                const newService =
+                await tx.services.create({
+
+                    data:{
+
+                        workspace_id:
+                        newWorkspace.id,
+
+                        domain_id:
+
+                        domainMap.get(
+
+                            Number(
+                                service.domain_id
+                            )
+
+                        ),
+
+                        service_name:
+                        service.service_name,
+
+                        status:
+                        service.status
+
+                    }
+
+                });
+
+                serviceMap.set(
+
+                    Number(service.id),
+
+                    Number(newService.id)
+
+                );
+
+            }
+
+            //------------------------------------------------
+            // CLONE DEPENDENCIES
+            //------------------------------------------------
+
+            const dependencies =
+            await tx.dependencies.findMany({
+
+                where:{
+
+                    workspace_id:
+                    workspaceId
+
+                }
+
+            });
+
+            for(
+                const dependency
+                of dependencies
+            ){
+
+                await tx.dependencies.create({
+
+                    data:{
+
+                        workspace_id:
+                        newWorkspace.id,
+
+                        source_service_id:
+
+                        serviceMap.get(
+
+                            Number(
+                                dependency
+                                .source_service_id
+                            )
+
+                        ),
+
+                        target_service_id:
+
+                        serviceMap.get(
+
+                            Number(
+                                dependency
+                                .target_service_id
+                            )
+
+                        )
+
+                    }
+
+                });
+
+            }
+
+            return {
+
+                message:
+                "Workspace cloned successfully",
+
+                workspace_id:
+                newWorkspace.id
+
+            };
+
+        }
+
+    );
+
+}
+
+
+
+async function updateWorkspaceName(
+    workspaceId,
+    data
+){
+
+    const {
+        workspace_name
+    } = data;
+
+    if(!workspace_name){
+
+        throw new Error(
+            "Workspace name is required"
+        );
+
+    }
+
+    const workspace =
+    await prisma.workspaces.findUnique({
+
+        where:{
+            id:Number(workspaceId)
+        }
+
+    });
+
+    if(!workspace){
+
+        throw new Error(
+            "Workspace not found"
+        );
+
+    }
+
+    if(
+        workspace.workspace_type !==
+        "TEAM"
+    ){
+
+        throw new Error(
+            "Only TEAM workspaces can be updated here"
+        );
+
+    }
+
+    const existingWorkspace =
+    await prisma.workspaces.findFirst({
+
+        where:{
+
+            owner_user_id:
+            workspace.owner_user_id,
+
+            workspace_name:
+            workspace_name,
+
+            NOT:{
+                id:Number(workspaceId)
+            }
+
+        }
+
+    });
+
+    if(existingWorkspace){
+
+        throw new Error(
+            "Workspace name already exists"
+        );
+
+    }
+
+    await prisma.workspaces.update({
+
+        where:{
+            id:Number(workspaceId)
+        },
+
+        data:{
+
+            workspace_name:
+            workspace_name
+
+        }
+
+    });
+
+    return {
+
+        message:
+        "Workspace updated successfully"
+
+    };
+
+}
+
+
+
+
 async function deletePersonalWorkspace(
     workspaceId
 ){
@@ -499,13 +857,70 @@ async function deletePersonalWorkspace(
 
     }
 
-    await prisma.workspaces.delete({
+    await prisma.$transaction(
 
-        where:{
-            id:Number(workspaceId)
+        async(tx)=>{
+
+            //----------------------------------
+            // DELETE DEPENDENCIES
+            //----------------------------------
+
+            await tx.dependencies.deleteMany({
+
+                where:{
+
+                    workspace_id:
+                    Number(workspaceId)
+
+                }
+
+            });
+
+            //----------------------------------
+            // DELETE SERVICES
+            //----------------------------------
+
+            await tx.services.deleteMany({
+
+                where:{
+
+                    workspace_id:
+                    Number(workspaceId)
+
+                }
+
+            });
+
+            //----------------------------------
+            // DELETE DOMAINS
+            //----------------------------------
+
+            await tx.domains.deleteMany({
+
+                where:{
+
+                    workspace_id:
+                    Number(workspaceId)
+
+                }
+
+            });
+
+            //----------------------------------
+            // DELETE WORKSPACE
+            //----------------------------------
+
+            await tx.workspaces.delete({
+
+                where:{
+                    id:Number(workspaceId)
+                }
+
+            });
+
         }
 
-    });
+    );
 
     return {
 
@@ -517,6 +932,378 @@ async function deletePersonalWorkspace(
 }
 
 
+
+
+
+async function getWorkspaceGraph(
+    workspaceId
+){
+
+    workspaceId =
+    Number(workspaceId);
+
+    const services =
+    await prisma.services.findMany({
+
+        where:{
+            workspace_id:
+            workspaceId
+        },
+
+        orderBy:{
+            service_name:
+            "asc"
+        }
+
+    });
+
+    const dependencies =
+    await prisma.dependencies.findMany({
+
+        where:{
+            workspace_id:
+            workspaceId
+        }
+
+    });
+
+    const nodes =
+    services.map(
+
+        service => ({
+
+            id:
+            String(service.id),
+
+            type:
+            "default",
+
+            data:{
+
+                label:
+                service.service_name,
+
+                domain_id:
+                String(
+                    service.domain_id
+                ),
+
+                status:
+                service.status
+
+            }
+
+        })
+
+    );
+
+    const edges =
+    dependencies.map(
+
+        dependency => ({
+
+            id:
+
+            `e${dependency.source_service_id}-${dependency.target_service_id}`,
+
+            source:
+            String(
+                dependency.source_service_id
+            ),
+
+            target:
+            String(
+                dependency.target_service_id
+            )
+
+        })
+
+    );
+
+    return {
+
+        nodes,
+        edges
+
+    };
+
+}
+
+
+
+
+async function generateImpactReport(
+    workspaceId,
+    data
+){
+
+    workspaceId =
+    Number(workspaceId);
+
+    const {
+        root_service_id
+    } = data;
+
+    if(!root_service_id){
+
+        throw new Error(
+            "Root service id is required"
+        );
+
+    }
+
+    //--------------------------------------------------
+    // CHECK ROOT SERVICE
+    //--------------------------------------------------
+
+    const rootService =
+    await prisma.services.findFirst({
+
+        where:{
+
+            id:Number(root_service_id),
+
+            workspace_id:
+            workspaceId
+
+        }
+
+    });
+
+    if(!rootService){
+
+        throw new Error(
+            "Root service not found in workspace"
+        );
+
+    }
+
+    //--------------------------------------------------
+    // GET ALL SERVICES
+    //--------------------------------------------------
+
+    const services =
+    await prisma.services.findMany({
+
+        where:{
+
+            workspace_id:
+            workspaceId
+
+        }
+
+    });
+
+    //--------------------------------------------------
+    // GET ALL DEPENDENCIES
+    //--------------------------------------------------
+
+    const dependencies =
+    await prisma.dependencies.findMany({
+
+        where:{
+
+            workspace_id:
+            workspaceId
+
+        }
+
+    });
+
+    //--------------------------------------------------
+    // SERVICE -> DOMAIN MAP
+    //--------------------------------------------------
+
+    const serviceDomainMap =
+    new Map();
+
+    for(
+        const service
+        of services
+    ){
+
+        serviceDomainMap.set(
+
+            Number(service.id),
+
+            Number(service.domain_id)
+
+        );
+
+    }
+
+    //--------------------------------------------------
+    // ADJACENCY LIST
+    //--------------------------------------------------
+
+    const graph =
+    new Map();
+
+    for(
+        const service
+        of services
+    ){
+
+        graph.set(
+
+            Number(service.id),
+
+            []
+
+        );
+
+    }
+
+    for(
+        const dependency
+        of dependencies
+    ){
+
+        graph.get(
+
+            Number(
+                dependency
+                .source_service_id
+            )
+
+        ).push(
+
+            Number(
+                dependency
+                .target_service_id
+            )
+
+        );
+
+    }
+
+    //--------------------------------------------------
+    // DFS
+    //--------------------------------------------------
+
+    const visited =
+    new Set();
+
+    const affectedDomains =
+    new Set();
+
+    function dfs(
+        serviceId
+    ){
+
+        if(
+            visited.has(
+                serviceId
+            )
+        ){
+
+            return;
+
+        }
+
+        visited.add(
+            serviceId
+        );
+
+        affectedDomains.add(
+
+            serviceDomainMap.get(
+                serviceId
+            )
+
+        );
+
+        const neighbours =
+        graph.get(
+            serviceId
+        ) || [];
+
+        for(
+            const neighbour
+            of neighbours
+        ){
+
+            dfs(
+                neighbour
+            );
+
+        }
+
+    }
+
+    dfs(
+        Number(root_service_id)
+    );
+
+    //--------------------------------------------------
+    // CALCULATE METRICS
+    //--------------------------------------------------
+
+    const affectedServicesCount =
+    visited.size;
+
+    const affectedDomainsCount =
+    affectedDomains.size;
+
+    const totalServices =
+    services.length;
+
+    const severityScore =
+    Math.round(
+
+        (
+            affectedServicesCount
+            /
+            totalServices
+        ) * 100
+
+    );
+
+    //--------------------------------------------------
+    // STORE REPORT
+    //--------------------------------------------------
+
+    const report =
+    await prisma.impact_reports.create({
+
+        data:{
+
+            workspace_id:
+            workspaceId,
+
+            root_service_id:
+            Number(
+                root_service_id
+            ),
+
+            affected_services_count:
+            affectedServicesCount,
+
+            affected_domains_count:
+            affectedDomainsCount,
+
+            severity_score:
+            severityScore
+
+        }
+
+    });
+
+    return report;
+
+}
+
+
+
+
+
+
+
+
+
+
+
+
 module.exports = {
 
     createWorkspace,
@@ -525,6 +1312,9 @@ module.exports = {
     deleteWorkspace,
     transferWorkspaceOwnership,
     updatePersonalWorkspaceName,
-    deletePersonalWorkspace
+    deletePersonalWorkspace,
+    cloneWorkspaceToPersonal,
+    getWorkspaceGraph,
+    generateImpactReport
 
 };

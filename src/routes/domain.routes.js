@@ -26,6 +26,11 @@ require(
 );
 
 
+const domainOwnerMiddleware =
+require("../middleware/domain-owner.middleware");
+
+
+
 
 
 router.post(
@@ -62,6 +67,13 @@ router.get(
     "/:workspaceId",
     authenticate,
     domainController.getDomains
+);
+
+router.patch(
+    "/:id/lead",
+    authenticate,
+    domainOwnerMiddleware,
+    domainController.changeDomainLead
 );
 
 

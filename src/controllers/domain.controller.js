@@ -160,3 +160,40 @@ async(req,res)=>{
     }
 
 };
+
+
+
+exports.changeDomainLead =
+async(req,res)=>{
+
+    try{
+
+        const result =
+        await domainService
+        .changeDomainLead(
+
+            req.params.id,
+
+            req.body
+
+        );
+
+        return res
+        .status(200)
+        .json(result);
+
+    }
+    catch(error){
+
+        return res
+        .status(400)
+        .json({
+
+            message:
+            error.message
+
+        });
+
+    }
+
+};

@@ -29,6 +29,22 @@ router.get(
 );
 
 
+router.get(
+    "/:id/graph",
+    authMiddleware,
+    workspaceController.getWorkspaceGraph
+);
+
+
+router.post(
+    "/:id/impact-report",
+    authMiddleware,
+    workspaceController.generateImpactReport
+);
+
+
+
+
 router.patch(
     "/:id/name",
     authMiddleware,
@@ -69,6 +85,16 @@ router.delete(
     modifyWorkspaceMiddleware,
     workspaceController.deletePersonalWorkspace
 );
+
+
+router.post(
+    "/:id/clone",
+    authMiddleware,
+    workspaceController
+    .cloneWorkspaceToPersonal
+);
+
+
 
 
 module.exports = router;

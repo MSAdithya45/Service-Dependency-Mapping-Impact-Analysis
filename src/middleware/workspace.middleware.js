@@ -72,6 +72,9 @@ async function canTransferWorkspaceOwnership(
 
   }
 
+const prisma =
+require("../config/prisma");
+
 async function canModifyWorkspace(
     req,
     res,
@@ -109,18 +112,11 @@ async function canModifyWorkspace(
         }
 
         if(
+
             Number(
                 workspace.owner_user_id
-            ) === userId
-        ){
+            ) !== userId
 
-            return next();
-
-        }
-
-        if(
-            workspace.workspace_type ===
-            "PERSONAL"
         ){
 
             return res
@@ -128,45 +124,13 @@ async function canModifyWorkspace(
             .json({
 
                 message:
-                "Only owner can modify personal workspace"
+                "Only workspace owner can modify workspace"
 
             });
 
         }
 
-        const lead =
-        await prisma.workspace_members
-        .findFirst({
-
-            where:{
-
-                workspace_id:
-                workspaceId,
-
-                user_id:
-                userId,
-
-                role:
-                "LEAD"
-
-            }
-
-        });
-
-        if(lead){
-
-            return next();
-
-        }
-
-        return res
-        .status(403)
-        .json({
-
-            message:
-            "Only workspace owner or domain lead can modify workspace"
-
-        });
+        return next();
 
     }
     catch(error){
