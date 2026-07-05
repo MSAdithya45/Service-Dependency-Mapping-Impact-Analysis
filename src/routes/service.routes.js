@@ -56,6 +56,13 @@ router.delete(
 );
 
 
+router.get(
+    "/:workspaceId/dependencies",
+    authenticate,
+    serviceController.getWorkspaceServices
+);
+
+
 
 
 

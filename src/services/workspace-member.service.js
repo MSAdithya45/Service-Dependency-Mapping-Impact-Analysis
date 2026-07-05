@@ -51,9 +51,6 @@ async function joinAsDeveloper(
                 workspace_id
             ),
 
-            domain_id:
-            invite.domain_id,
-
             user_id:
             userId
 
@@ -64,7 +61,7 @@ async function joinAsDeveloper(
     if(existingMember){
 
         throw new Error(
-            "User already exists in this domain"
+            "User already exists in this workspace"
         );
 
     }

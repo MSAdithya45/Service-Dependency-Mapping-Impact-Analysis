@@ -50,17 +50,22 @@ function WorkspaceHeader({
     );
 
 
+    const isOwner =
+        roles.includes("OWNER");
+
+
     const role =
 
         roles.includes("OWNER")
+        && roles.includes("LEAD")
+
+        ? "OWNER + LEAD"
+
+        : roles.includes("OWNER")
 
         ? "OWNER"
 
-        : roles.includes("LEAD")
-
-        ? "LEAD"
-
-        : "DEVELOPER";
+        : "LEAD";
 
 
     async function handleRename(){
@@ -179,8 +184,6 @@ function WorkspaceHeader({
             "
 
         >
-
-            {/* LEFT */}
 
             <div
                 className="flex items-center gap-8"
@@ -363,33 +366,41 @@ function WorkspaceHeader({
                                 </span>
 
 
-                                <button
+                                {
 
-                                    onClick={()=>{
+                                    isOwner && (
 
-                                        setIsEditing(
-                                            true
-                                        );
+                                        <button
 
-                                    }}
+                                            onClick={()=>{
 
-                                    className="
+                                                setIsEditing(
+                                                    true
+                                                );
 
-                                        text-[var(--text-secondary)]
+                                            }}
 
-                                        hover:text-cyan-400
+                                            className="
 
-                                        transition
+                                                text-[var(--text-secondary)]
 
-                                    "
+                                                hover:text-cyan-400
 
-                                >
+                                                transition
 
-                                    <Pencil
-                                        size={16}
-                                    />
+                                            "
 
-                                </button>
+                                        >
+
+                                            <Pencil
+                                                size={16}
+                                            />
+
+                                        </button>
+
+                                    )
+
+                                }
 
                             </div>
 
@@ -401,8 +412,6 @@ function WorkspaceHeader({
 
             </div>
 
-
-            {/* RIGHT */}
 
             <div
                 className="flex items-center gap-6"

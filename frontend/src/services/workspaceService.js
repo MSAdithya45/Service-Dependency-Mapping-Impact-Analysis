@@ -70,10 +70,6 @@ export async function createWorkspace(
 // RENAME WORKSPACE
 //--------------------------------------------------
 
-//--------------------------------------------------
-// RENAME WORKSPACE
-//--------------------------------------------------
-
 export async function renameWorkspace(
     workspaceId,
     workspaceName

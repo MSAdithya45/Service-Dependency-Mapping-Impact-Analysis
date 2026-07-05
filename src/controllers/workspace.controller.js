@@ -216,8 +216,7 @@ async function getWorkspaceGraph(
         .getWorkspaceGraph(
 
             req.params.id,
-
-            req.workspaceRoles
+            req.user.userId
 
         );
 

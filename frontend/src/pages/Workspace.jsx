@@ -30,6 +30,12 @@ from "../components/WorkspaceHeader";
 import WorkspaceActions
 from "../components/WorkspaceActions";
 
+import LeadActions
+from "../components/LeadActions";
+
+import DeveloperActions
+from "../components/DeveloperActions";
+
 import GraphView
 from "../components/GraphView";
 
@@ -229,7 +235,84 @@ function Workspace(){
         );
 
     }
-    console.log("Workspace Page:", workspace);
+
+
+    const isOwner =
+    roles.includes(
+        "OWNER"
+    );
+
+
+    const isLead =
+    roles.includes(
+        "LEAD"
+    );
+
+
+    const isDeveloper =
+    roles.includes(
+        "DEVELOPER"
+    );
+
+
+    const dashboardTitle =
+
+        isOwner && isLead
+
+        ?
+
+        "Owner & Lead Dashboard"
+
+        :
+
+        isOwner
+
+        ?
+
+        "Owner Dashboard"
+
+        :
+
+        isLead
+
+        ?
+
+        "Lead Dashboard"
+
+        :
+
+        "Developer Dashboard";
+
+
+    const dashboardDescription =
+
+        isOwner && isLead
+
+        ?
+
+        "Manage your workspace, developers, services and dependencies."
+
+        :
+
+        isOwner
+
+        ?
+
+        "Manage your workspace, leads and domains."
+
+        :
+
+        isLead
+
+        ?
+
+        "Manage your developers, services and dependencies."
+
+        :
+
+        "Read-only access to services and impact reports.";
+
+
     return(
 
         <div
@@ -265,7 +348,7 @@ function Workspace(){
                     "
                 >
 
-                    Owner Dashboard
+                    {dashboardTitle}
 
                 </h1>
 
@@ -277,19 +360,66 @@ function Workspace(){
                     "
                 >
 
-                    Manage your workspace,
-                    leads and domains.
+                    {dashboardDescription}
 
                 </p>
 
 
-                <WorkspaceActions
+                {
 
-                    workspace={workspace}
+                    isOwner && (
 
-                    roles={roles}
+                        <WorkspaceActions
 
-                />
+                            workspace={workspace}
+
+                            roles={roles}
+
+                        />
+
+                    )
+
+                }
+
+
+                {
+
+                    isLead && (
+
+                        <LeadActions
+
+                            workspace={workspace}
+
+                            roles={roles}
+
+                        />
+
+                    )
+
+                }
+
+
+                {
+
+                    isDeveloper
+
+                    &&
+
+                    !isOwner
+
+                    &&
+
+                    !isLead && (
+
+                        <DeveloperActions
+
+                            workspace={workspace}
+
+                        />
+
+                    )
+
+                }
 
 
                 <div

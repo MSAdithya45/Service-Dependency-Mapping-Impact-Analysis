@@ -8,7 +8,8 @@ import {
     FolderKanban,
     Plus,
     Copy,
-    Trash2
+    Trash2,
+    LogOut
 
 }
 from "lucide-react";
@@ -36,13 +37,17 @@ from "./DeleteWorkspaceModal";
 
 function WorkspaceActions({
 
-    workspace,
-    roles
+    workspace
 
 }){
 
     const navigate =
     useNavigate();
+
+
+    const isPersonal =
+    workspace.workspace_type ===
+    "PERSONAL";
 
 
     const [
@@ -55,8 +60,8 @@ function WorkspaceActions({
 
     const [
 
-        showDomainModal,
-        setShowDomainModal
+        showDomainLeadsModal,
+        setShowDomainLeadsModal
 
     ] = useState(false);
 
@@ -77,10 +82,6 @@ function WorkspaceActions({
     ] = useState(false);
 
 
-    //--------------------------------------------------
-    // CLONE WORKSPACE
-    //--------------------------------------------------
-
     async function handleCloneWorkspace(){
 
         try{
@@ -100,12 +101,7 @@ function WorkspaceActions({
 
                 navigate(
 
-                    `/workspace/${
-
-                        response
-                        .workspace_id
-
-                    }`
+                    `/workspace/${response.workspace_id}`
 
                 );
 
@@ -137,10 +133,6 @@ function WorkspaceActions({
 
     }
 
-
-    //--------------------------------------------------
-    // DELETE WORKSPACE
-    //--------------------------------------------------
 
     async function handleDeleteWorkspace(){
 
@@ -198,20 +190,11 @@ function WorkspaceActions({
     }
 
 
-    //--------------------------------------------------
-    // OWNER CHECK
-    //--------------------------------------------------
+    function handleExitWorkspace(){
 
-    const isOwner =
-
-        roles.includes(
-            "OWNER"
+        alert(
+            "Exit Workspace functionality coming soon!"
         );
-
-
-    if(!isOwner){
-
-        return null;
 
     }
 
@@ -227,85 +210,95 @@ function WorkspaceActions({
                     mt-6
 
                     flex
-                    items-center
-                    gap-4
-
                     flex-wrap
+                    gap-4
 
                 "
 
             >
 
-                <button
+                {
 
-                    onClick={()=>{
+                    !isPersonal && (
 
-                        setShowInviteModal(
-                            true
-                        );
+                        <>
 
-                    }}
+                            <button
 
-                    className="
+                                onClick={()=>{
 
-                        btn-primary
+                                    setShowInviteModal(
+                                        true
+                                    );
 
-                        h-14
-                        px-6
+                                }}
 
-                        rounded-2xl
+                                className="
 
-                        flex
-                        items-center
-                        gap-3
+                                    btn-primary
 
-                    "
+                                    h-14
+                                    px-6
 
-                >
+                                    rounded-2xl
 
-                    <UserPlus
-                        size={18}
-                    />
+                                    flex
+                                    items-center
+                                    gap-3
 
-                    Invite Lead
+                                "
 
-                </button>
+                            >
+
+                                <UserPlus
+                                    size={18}
+                                />
+
+                                Invite Lead
+
+                            </button>
 
 
-                <button
+                            <button
 
-                    onClick={()=>{
+                                onClick={()=>{
 
-                        setShowDomainModal(
-                            true
-                        );
+                                    setShowDomainLeadsModal(
+                                        true
+                                    );
 
-                    }}
+                                }}
 
-                    className="
+                                className="
 
-                        btn-secondary
+                                    btn-secondary
 
-                        h-14
-                        px-6
+                                    h-14
+                                    px-6
 
-                        rounded-2xl
+                                    rounded-2xl
 
-                        flex
-                        items-center
-                        gap-3
+                                    flex
+                                    items-center
+                                    gap-3
 
-                    "
+                                "
 
-                >
+                            >
 
-                    <FolderKanban
-                        size={18}
-                    />
+                                <FolderKanban
+                                    size={18}
+                                />
 
-                    Manage Domains
+                                Manage Domain Leads
 
-                </button>
+                            </button>
+
+                        </>
+
+                    )
+
+                }
 
 
                 <button
@@ -339,7 +332,7 @@ function WorkspaceActions({
                         size={18}
                     />
 
-                    New Domain
+                    Create Domain
 
                 </button>
 
@@ -372,6 +365,38 @@ function WorkspaceActions({
                     />
 
                     Clone Workspace
+
+                </button>
+
+
+                <button
+
+                    onClick={
+                        handleExitWorkspace
+                    }
+
+                    className="
+
+                        btn-secondary
+
+                        h-14
+                        px-6
+
+                        rounded-2xl
+
+                        flex
+                        items-center
+                        gap-3
+
+                    "
+
+                >
+
+                    <LogOut
+                        size={18}
+                    />
+
+                    Exit Workspace
 
                 </button>
 
@@ -446,7 +471,7 @@ function WorkspaceActions({
 
             {
 
-                showDomainModal && (
+                showDomainLeadsModal && (
 
                     <DomainLeadsModal
 
@@ -456,7 +481,7 @@ function WorkspaceActions({
 
                         onClose={()=>{
 
-                            setShowDomainModal(
+                            setShowDomainLeadsModal(
                                 false
                             );
 

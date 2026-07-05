@@ -249,6 +249,7 @@ async function getWorkspaces(
 
     });
 
+
     const ownedTeamWorkspaces =
     await prisma.workspaces.findMany({
 
@@ -264,6 +265,7 @@ async function getWorkspaces(
 
     });
 
+
     const memberships =
     await prisma.workspace_members.findMany({
 
@@ -277,6 +279,58 @@ async function getWorkspaces(
 
     });
 
+
+    //----------------------------------
+    // GROUP MEMBERSHIPS BY WORKSPACE
+    //----------------------------------
+
+    const membershipMap =
+    new Map();
+
+
+    for(
+        const member
+        of memberships
+    ){
+
+        const workspaceId =
+        Number(
+            member.workspace_id
+        );
+
+
+        if(
+
+            !membershipMap.has(
+                workspaceId
+            )
+
+        ){
+
+            membershipMap.set(
+
+                workspaceId,
+
+                []
+
+            );
+
+        }
+
+
+        membershipMap
+        .get(workspaceId)
+        .push(
+            member.role
+        );
+
+    }
+
+
+    //----------------------------------
+    // JOINED TEAM WORKSPACES
+    //----------------------------------
+
     const joinedTeamWorkspaces =
     memberships
     .map(
@@ -285,8 +339,15 @@ async function getWorkspaces(
 
             ...member.workspaces,
 
-            role:
-            member.role
+            roles:
+
+            membershipMap.get(
+
+                Number(
+                    member.workspace_id
+                )
+
+            )
 
         })
 
@@ -300,8 +361,10 @@ async function getWorkspaces(
 
     );
 
+
     const teamWorkspaceMap =
     new Map();
+
 
     //----------------------------------
     // OWNED TEAM WORKSPACES
@@ -311,6 +374,19 @@ async function getWorkspaces(
         const workspace
         of ownedTeamWorkspaces
     ){
+
+        const roles =
+
+            membershipMap.get(
+
+                Number(workspace.id)
+
+            )
+
+            ||
+
+            [];
+
 
         teamWorkspaceMap.set(
 
@@ -328,14 +404,27 @@ async function getWorkspaces(
                     workspace.owner_user_id
                 ),
 
-                role:
-                "OWNER"
+                roles:[
+
+                    "OWNER",
+
+                    ...roles.filter(
+
+                        role =>
+
+                        role !==
+                        "OWNER"
+
+                    )
+
+                ]
 
             }
 
         );
 
     }
+
 
     //----------------------------------
     // JOINED TEAM WORKSPACES
@@ -380,30 +469,71 @@ async function getWorkspaces(
 
     }
 
+
     return {
 
         PERSONAL:
 
-        personalWorkspaces.map(
+            await Promise.all(
 
-            workspace => ({
+                personalWorkspaces.map(
 
-                ...workspace,
+                    async workspace => {
 
-                id:
-                Number(workspace.id),
+                        const leadDomains =
+                        await prisma.domains.count({
 
-                owner_user_id:
-                Number(
-                    workspace.owner_user_id
-                ),
+                            where:{
 
-                role:
-                "OWNER"
+                                workspace_id:
+                                workspace.id,
 
-            })
+                                lead_user_id:
+                                userId
 
-        ),
+                            }
+
+                        });
+
+
+                        const roles = ["OWNER"];
+
+
+                        if(
+
+                            leadDomains > 0
+
+                        ){
+
+                            roles.push(
+                                "LEAD"
+                            );
+
+                        }
+
+
+                        return {
+
+                            ...workspace,
+
+                            id:
+                            Number(workspace.id),
+
+                            owner_user_id:
+                            Number(
+                                workspace.owner_user_id
+                            ),
+
+                            roles
+
+                        };
+
+                    }
+
+                )
+
+            ),
+
 
         TEAM:
 
@@ -1184,7 +1314,7 @@ async function updateWorkspaceName(
 
 async function getWorkspaceGraph(
     workspaceId,
-    roles
+    userId
 ){
 
     workspaceId =
@@ -1206,7 +1336,11 @@ async function getWorkspaceGraph(
 
             id:true,
 
-            workspace_name:true
+            workspace_name:true,
+
+            workspace_type:true,
+
+            owner_user_id:true
 
         }
 
@@ -1218,6 +1352,99 @@ async function getWorkspaceGraph(
         throw new Error(
             "Workspace not found"
         );
+
+    }
+
+
+    //----------------------------------
+    // BUILD USER ROLES
+    //----------------------------------
+
+    const roles = [];
+
+
+    if(
+
+        Number(
+            workspace.owner_user_id
+        ) === Number(userId)
+
+    ){
+
+        roles.push(
+            "OWNER"
+        );
+
+    }
+
+
+    const leadDomains =
+    await prisma.domains.count({
+
+        where:{
+
+            workspace_id:
+            workspaceId,
+
+            lead_user_id:
+            userId
+
+        }
+
+    });
+
+
+    if(
+
+        leadDomains > 0
+
+    ){
+
+        roles.push(
+            "LEAD"
+        );
+
+    }
+
+
+    const memberships =
+    await prisma.workspace_members.findMany({
+
+        where:{
+
+            workspace_id:
+            workspaceId,
+
+            user_id:
+            userId
+
+        },
+
+        select:{
+            role:true
+        }
+
+    });
+
+
+    for(
+        const member
+        of memberships
+    ){
+
+        if(
+
+            !roles.includes(
+                member.role
+            )
+
+        ){
+
+            roles.push(
+                member.role
+            );
+
+        }
 
     }
 
@@ -1257,6 +1484,9 @@ async function getWorkspaceGraph(
 
             workspace_name:
             workspace.workspace_name,
+
+            workspace_type:
+            workspace.workspace_type,
 
             roles,
 
@@ -1365,6 +1595,9 @@ async function getWorkspaceGraph(
         workspace_name:
         workspace.workspace_name,
 
+        workspace_type:
+        workspace.workspace_type,
+
         roles,
 
         graph_exists:
@@ -1377,6 +1610,9 @@ async function getWorkspaceGraph(
     };
 
 }
+
+
+
 
 
 
