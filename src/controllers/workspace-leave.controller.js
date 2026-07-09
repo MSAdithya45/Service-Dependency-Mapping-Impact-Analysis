@@ -8,11 +8,10 @@ require(
 
 
 
-
 exports.getExitOptions =
-async (req, res) => {
+async(req,res)=>{
 
-    try {
+    try{
 
         const result =
         await workspaceLeaveService
@@ -20,7 +19,9 @@ async (req, res) => {
 
             req.params.workspaceId,
 
-            req.user.userId
+            req.user.userId,
+
+            req.query.exit_type
 
         );
 
@@ -28,11 +29,14 @@ async (req, res) => {
         .json(result);
 
     }
-    catch (error) {
+    catch(error){
 
         res.status(400)
         .json({
-            message: error.message
+
+            message:
+            error.message
+
         });
 
     }
@@ -40,10 +44,14 @@ async (req, res) => {
 };
 
 
-exports.exitWorkspace =
-async (req, res) => {
 
-    try {
+
+
+
+exports.exitWorkspace =
+async(req,res)=>{
+
+    try{
 
         const result =
         await workspaceLeaveService
@@ -61,11 +69,14 @@ async (req, res) => {
         .json(result);
 
     }
-    catch (error) {
+    catch(error){
 
         res.status(400)
         .json({
-            message: error.message
+
+            message:
+            error.message
+
         });
 
     }

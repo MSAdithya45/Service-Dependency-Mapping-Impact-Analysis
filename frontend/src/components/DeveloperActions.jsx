@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 import {
@@ -15,6 +16,8 @@ import {
 }
 from "../services/workspaceService";
 
+import ExitWorkspaceModal
+from "./ExitWorkspaceModal";
 
 function DeveloperActions({
 
@@ -25,6 +28,27 @@ function DeveloperActions({
     const navigate =
     useNavigate();
 
+    //----------------------------------
+    // EXIT
+    //----------------------------------
+
+    const [
+
+        showExitModal,
+        setShowExitModal
+
+    ] = useState(false);
+
+    const [
+
+        exitType,
+        setExitType
+
+    ] = useState("");
+
+    //----------------------------------
+    // CLONE
+    //----------------------------------
 
     async function handleCloneWorkspace(){
 
@@ -33,9 +57,10 @@ function DeveloperActions({
             const response =
 
             await cloneWorkspace(
-                workspace.id
-            );
 
+                workspace.id
+
+            );
 
             if(
 
@@ -54,9 +79,10 @@ function DeveloperActions({
 
             }
 
-
             alert(
+
                 response.message
+
             );
 
         }
@@ -64,11 +90,7 @@ function DeveloperActions({
 
             alert(
 
-                error.response
-                ?.data
-                ?.message
-
-                ||
+                error.response?.data?.message ||
 
                 "Failed to clone workspace"
 
@@ -78,17 +100,29 @@ function DeveloperActions({
 
     }
 
+    //----------------------------------
+    // EXIT
+    //----------------------------------
 
     function handleExitWorkspace(){
 
-        alert(
-            "Exit Workspace functionality coming soon!"
+        setExitType(
+
+            "DEVELOPER"
+
+        );
+
+        setShowExitModal(
+
+            true
+
         );
 
     }
 
-
     return(
+
+        <>
 
             <div
                 className="
@@ -99,76 +133,61 @@ function DeveloperActions({
             >
 
                 <div
-
                     className="
-
                         flex
                         items-center
                         gap-4
                         whitespace-nowrap
-
                     "
-
                 >
 
                     <button
 
                         onClick={
+
                             handleCloneWorkspace
+
                         }
 
                         className="
-
                             btn-secondary
-
                             h-12
                             px-5
-
                             rounded-xl
-
                             flex
                             items-center
                             gap-3
-
                         "
 
                     >
 
-                        <Copy
-                            size={18}
-                        />
+                        <Copy size={18}/>
 
                         Clone Workspace
 
                     </button>
 
-
                     <button
 
                         onClick={
+
                             handleExitWorkspace
+
                         }
 
                         className="
-
                             btn-secondary
-
                             h-12
                             px-5
-
                             rounded-xl
-
                             flex
                             items-center
                             gap-3
-
                         "
 
                     >
 
-                        <LogOut
-                            size={18}
-                        />
+                        <LogOut size={18}/>
 
                         Exit Workspace
 
@@ -178,9 +197,28 @@ function DeveloperActions({
 
             </div>
 
-        );
+            {showExitModal && (
+
+                <ExitWorkspaceModal
+
+                    workspaceId={workspace.id}
+
+                    exitType={exitType}
+
+                    onClose={() => {
+
+                        setShowExitModal(false);
+
+                    }}
+
+                />
+
+            )}
+
+        </>
+
+    );
 
 }
-
 
 export default DeveloperActions;

@@ -1,4 +1,6 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+
 import {
     UserPlus,
     Users,
@@ -9,8 +11,6 @@ import {
     Copy,
     LogOut
 } from "lucide-react";
-
-import { useNavigate } from "react-router-dom";
 
 import {
     cloneWorkspace
@@ -24,9 +24,10 @@ import CreateServiceModal from "./CreateServiceModal";
 import ManageServicesModal from "./ManageServicesModal";
 import CreateDependencyModal from "./CreateDependencyModal";
 import ManageDependenciesModal from "./ManageDependenciesModal";
+import ExitWorkspaceModal from "./ExitWorkspaceModal";
 
 function LeadActions({
-    
+
     workspace,
     roles,
     refreshWorkspace
@@ -38,47 +39,125 @@ function LeadActions({
     const isPersonal =
         workspace?.workspace_type === "PERSONAL";
 
-    const [showCreateDomainModal,setShowCreateDomainModal] = useState(false);
-    const [showManageDomainsModal,setShowManageDomainsModal] = useState(false);
-    const [showInviteDeveloperModal,setShowInviteDeveloperModal] = useState(false);
-    const [showManageDeveloperModal,setShowManageDeveloperModal] = useState(false);
-    const [showCreateServiceModal,setShowCreateServiceModal] = useState(false);
-    const [showManageServicesModal,setShowManageServicesModal] = useState(false);
-    const [showCreateDependencyModal,setShowCreateDependencyModal] = useState(false);
-    const [showManageDependenciesModal,setShowManageDependenciesModal] = useState(false);
+    //----------------------------------
+    // MODALS
+    //----------------------------------
+
+    const [
+        showCreateDomainModal,
+        setShowCreateDomainModal
+    ] = useState(false);
+
+    const [
+        showManageDomainsModal,
+        setShowManageDomainsModal
+    ] = useState(false);
+
+    const [
+        showInviteDeveloperModal,
+        setShowInviteDeveloperModal
+    ] = useState(false);
+
+    const [
+        showManageDeveloperModal,
+        setShowManageDeveloperModal
+    ] = useState(false);
+
+    const [
+        showCreateServiceModal,
+        setShowCreateServiceModal
+    ] = useState(false);
+
+    const [
+        showManageServicesModal,
+        setShowManageServicesModal
+    ] = useState(false);
+
+    const [
+        showCreateDependencyModal,
+        setShowCreateDependencyModal
+    ] = useState(false);
+
+    const [
+        showManageDependenciesModal,
+        setShowManageDependenciesModal
+    ] = useState(false);
+
+    //----------------------------------
+    // EXIT
+    //----------------------------------
+
+    const [
+        showExitModal,
+        setShowExitModal
+    ] = useState(false);
+
+    const [
+        exitType,
+        setExitType
+    ] = useState("");
+
+    //----------------------------------
+    // CLONE
+    //----------------------------------
 
     async function handleCloneWorkspace(){
 
         try{
 
             const response =
-                await cloneWorkspace(workspace.id);
+            await cloneWorkspace(
+                workspace.id
+            );
 
-            if(response.message === "Workspace cloned successfully"){
+            if(
 
-                navigate(`/workspace/${response.workspace_id}`);
+                response.message ===
+                "Workspace cloned successfully"
+
+            ){
+
+                navigate(
+
+                    `/workspace/${response.workspace_id}`
+
+                );
+
                 return;
 
             }
 
-            alert(response.message);
+            alert(
+                response.message
+            );
 
         }
         catch(error){
 
             alert(
+
                 error.response?.data?.message ||
+
                 "Failed to clone workspace"
+
             );
 
         }
 
     }
 
+    //----------------------------------
+    // EXIT
+    //----------------------------------
+
     function handleExitWorkspace(){
 
-        alert(
-            "Exit Workspace functionality coming soon!"
+        setExitType(
+            "LEAD"
+        );
+
+        setShowExitModal(
+            true
         );
 
     }
@@ -96,107 +175,106 @@ function LeadActions({
                 </h2>
 
                 <div className="flex flex-wrap gap-4">
-
                     {!isPersonal && (
 
-                        <>
+    <>
 
-                            <button
-                                onClick={() => setShowInviteDeveloperModal(true)}
-                                className="btn-primary h-14 px-6 rounded-2xl flex items-center gap-3"
-                            >
-                                <UserPlus size={18}/>
-                                Invite Developer
-                            </button>
+        <button
+            onClick={() => setShowInviteDeveloperModal(true)}
+            className="btn-primary h-14 px-6 rounded-2xl flex items-center gap-3"
+        >
+            <UserPlus size={18}/>
+            Invite Developer
+        </button>
 
-                            <button
-                                onClick={() => setShowManageDeveloperModal(true)}
-                                className="btn-secondary h-14 px-6 rounded-2xl flex items-center gap-3"
-                            >
-                                <Users size={18}/>
-                                Manage Developers
-                            </button>
+        <button
+            onClick={() => setShowManageDeveloperModal(true)}
+            className="btn-secondary h-14 px-6 rounded-2xl flex items-center gap-3"
+        >
+            <Users size={18}/>
+            Manage Developers
+        </button>
 
-                        </>
+    </>
 
-                    )}
+)}
+
+            <button
+                onClick={() => setShowCreateDomainModal(true)}
+                className="btn-secondary h-14 px-6 rounded-2xl flex items-center gap-3"
+            >
+                <Plus size={18}/>
+                Create Domain
+            </button>
+
+            <button
+                onClick={() => setShowManageDomainsModal(true)}
+                className="btn-secondary h-14 px-6 rounded-2xl flex items-center gap-3"
+            >
+                <FolderKanban size={18}/>
+                Manage Domains
+            </button>
+
+            <button
+                onClick={() => setShowCreateServiceModal(true)}
+                className="btn-secondary h-14 px-6 rounded-2xl flex items-center gap-3"
+            >
+                <Plus size={18}/>
+                Create Service
+            </button>
+
+            <button
+                onClick={() => setShowManageServicesModal(true)}
+                className="btn-secondary h-14 px-6 rounded-2xl flex items-center gap-3"
+            >
+                <Boxes size={18}/>
+                Manage Services
+            </button>
+
+            <button
+                onClick={() => setShowCreateDependencyModal(true)}
+                className="btn-secondary h-14 px-6 rounded-2xl flex items-center gap-3"
+            >
+                <Plus size={18}/>
+                Create Dependency
+            </button>
+
+            <button
+                onClick={() => setShowManageDependenciesModal(true)}
+                className="btn-secondary h-14 px-6 rounded-2xl flex items-center gap-3"
+            >
+                <GitBranch size={18}/>
+                Manage Dependencies
+            </button>
+
+            {!isPersonal && (
+
+                <>
 
                     <button
-                        onClick={() => setShowCreateDomainModal(true)}
+                        onClick={handleCloneWorkspace}
                         className="btn-secondary h-14 px-6 rounded-2xl flex items-center gap-3"
                     >
-                        <Plus size={18}/>
-                        Create Domain
+                        <Copy size={18}/>
+                        Clone Workspace
                     </button>
 
                     <button
-                        onClick={() => setShowManageDomainsModal(true)}
+                        onClick={handleExitWorkspace}
                         className="btn-secondary h-14 px-6 rounded-2xl flex items-center gap-3"
                     >
-                        <FolderKanban size={18}/>
-                        Manage Domains
+                        <LogOut size={18}/>
+                        Exit Workspace
                     </button>
 
-                    <button
-                        onClick={() => setShowCreateServiceModal(true)}
-                        className="btn-secondary h-14 px-6 rounded-2xl flex items-center gap-3"
-                    >
-                        <Plus size={18}/>
-                        Create Service
-                    </button>
+                </>
 
-                    <button
-                        onClick={() => setShowManageServicesModal(true)}
-                        className="btn-secondary h-14 px-6 rounded-2xl flex items-center gap-3"
-                    >
-                        <Boxes size={18}/>
-                        Manage Services
-                    </button>
-
-                    <button
-                        onClick={() => setShowCreateDependencyModal(true)}
-                        className="btn-secondary h-14 px-6 rounded-2xl flex items-center gap-3"
-                    >
-                        <Plus size={18}/>
-                        Create Dependency
-                    </button>
-
-                    <button
-                        onClick={() => setShowManageDependenciesModal(true)}
-                        className="btn-secondary h-14 px-6 rounded-2xl flex items-center gap-3"
-                    >
-                        <GitBranch size={18}/>
-                        Manage Dependencies
-                    </button>
-                                        {!isPersonal && (
-
-                        <>
-
-                            <button
-                                onClick={handleCloneWorkspace}
-                                className="btn-secondary h-14 px-6 rounded-2xl flex items-center gap-3"
-                            >
-                                <Copy size={18}/>
-                                Clone Workspace
-                            </button>
-
-                            <button
-                                onClick={handleExitWorkspace}
-                                className="btn-secondary h-14 px-6 rounded-2xl flex items-center gap-3"
-                            >
-                                <LogOut size={18}/>
-                                Exit Workspace
-                            </button>
-
-                        </>
-
-                    )}
+            )}
 
                 </div>
 
             </div>
-
-            {showCreateDomainModal && (
+                        {showCreateDomainModal && (
 
                 <CreateDomainModal
                     workspace={workspace}
@@ -238,19 +316,16 @@ function LeadActions({
             {showCreateServiceModal && (
 
                 <CreateServiceModal
-                workspaceId={workspace.id}
-                refreshWorkspace={refreshWorkspace}
-                onClose={() =>
-                    setShowCreateServiceModal(false)
-                }
-            />
+                    workspaceId={workspace.id}
+                    refreshWorkspace={refreshWorkspace}
+                    onClose={() => setShowCreateServiceModal(false)}
+                />
 
             )}
 
             {showManageServicesModal && (
 
                 <ManageServicesModal
-                    
                     workspaceId={workspace.id}
                     refreshWorkspace={refreshWorkspace}
                     onClose={() => setShowManageServicesModal(false)}
@@ -261,27 +336,37 @@ function LeadActions({
             {showCreateDependencyModal && (
 
                 <CreateDependencyModal
-
-                workspaceId={workspace.id}
-
-                refreshWorkspace={refreshWorkspace}
-
-                onClose={()=>
-
-                    setShowCreateDependencyModal(false)
-
-                }
-
-            />
+                    workspaceId={workspace.id}
+                    refreshWorkspace={refreshWorkspace}
+                    onClose={() => setShowCreateDependencyModal(false)}
+                />
 
             )}
-                {showManageDependenciesModal && (
+
+            {showManageDependenciesModal && (
 
                 <ManageDependenciesModal
-                            
                     workspaceId={workspace.id}
                     refreshWorkspace={refreshWorkspace}
                     onClose={() => setShowManageDependenciesModal(false)}
+                />
+
+            )}
+
+            {showExitModal && (
+
+                <ExitWorkspaceModal
+
+                    workspaceId={workspace.id}
+
+                    exitType={exitType}
+
+                    onClose={() => {
+
+                        setShowExitModal(false);
+
+                    }}
+
                 />
 
             )}

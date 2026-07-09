@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+
 import {
+
     UserPlus,
     FolderKanban,
     Users,
@@ -8,34 +10,43 @@ import {
     Copy,
     LogOut,
     Trash2
-} from "lucide-react";
+
+}
+from "lucide-react";
 
 import {
+
     cloneWorkspace,
     deleteWorkspace
-} from "../services/workspaceService";
+
+}
+from "../services/workspaceService";
 
 import InviteLeadModal from "./InviteLeadModal";
 import DomainLeadsModal from "./DomainLeadsModal";
 import ManageDevelopersModal from "./ManageDevelopersModal";
 import CreateDomainModal from "./CreateDomainModal";
 import DeleteWorkspaceModal from "./DeleteWorkspaceModal";
+import ExitWorkspaceModal from "./ExitWorkspaceModal";
 
 function WorkspaceActions({
 
     workspace,
     workspaceId
 
-}) {
-    console.log("WorkspaceActions props:", {
-    workspace,
-    workspaceId
-});
+}){
 
-    const navigate = useNavigate();
+    const navigate =
+    useNavigate();
 
     const isPersonal =
-        workspace?.workspace_type === "PERSONAL";
+
+        workspace?.workspace_type ===
+        "PERSONAL";
+
+    //----------------------------------
+    // MODALS
+    //----------------------------------
 
     const [
 
@@ -72,30 +83,64 @@ function WorkspaceActions({
 
     ] = useState(false);
 
-    async function handleCloneWorkspace() {
+    //----------------------------------
+    // EXIT
+    //----------------------------------
 
-        try {
+    const [
+
+        showExitModal,
+        setShowExitModal
+
+    ] = useState(false);
+
+    const [
+
+        exitType,
+        setExitType
+
+    ] = useState("");
+
+    //----------------------------------
+    // CLONE
+    //----------------------------------
+
+    async function handleCloneWorkspace(){
+
+        try{
 
             const response =
-                await cloneWorkspace(workspace.id);
+            await cloneWorkspace(
 
-            if (
+                workspace.id
+
+            );
+
+            if(
 
                 response.message ===
                 "Workspace cloned successfully"
 
-            ) {
+            ){
 
-                navigate(`/workspace/${response.workspace_id}`);
+                navigate(
+
+                    `/workspace/${response.workspace_id}`
+
+                );
+
                 return;
 
             }
 
-            alert(response.message);
+            alert(
+
+                response.message
+
+            );
 
         }
-
-        catch (error) {
+        catch(error){
 
             alert(
 
@@ -109,14 +154,22 @@ function WorkspaceActions({
 
     }
 
-    async function handleDeleteWorkspace() {
+    //----------------------------------
+    // DELETE
+    //----------------------------------
 
-        try {
+    async function handleDeleteWorkspace(){
+
+        try{
 
             const response =
-                await deleteWorkspace(workspace.id);
+            await deleteWorkspace(
 
-            if (
+                workspace.id
+
+            );
+
+            if(
 
                 response.message ===
                 "Workspace deleted successfully"
@@ -126,18 +179,26 @@ function WorkspaceActions({
                 response.message ===
                 "Personal workspace deleted successfully"
 
-            ) {
+            ){
 
-                navigate("/dashboard");
+                navigate(
+
+                    "/dashboard"
+
+                );
+
                 return;
 
             }
 
-            alert(response.message);
+            alert(
+
+                response.message
+
+            );
 
         }
-
-        catch (error) {
+        catch(error){
 
             alert(
 
@@ -151,15 +212,27 @@ function WorkspaceActions({
 
     }
 
-    function handleExitWorkspace() {
+    //----------------------------------
+    // EXIT
+    //----------------------------------
 
-        alert(
-            "Exit Workspace functionality coming soon!"
+    function handleExitWorkspace(){
+
+        setExitType(
+
+            "OWNER"
+
+        );
+
+        setShowExitModal(
+
+            true
+
         );
 
     }
 
-    return (
+    return(
 
         <>
 
@@ -172,81 +245,80 @@ function WorkspaceActions({
                 </h2>
 
                 <div className="flex flex-wrap gap-4">
-
                     {!isPersonal && (
 
-                        <>
+    <>
 
-                            <button
-                                onClick={() => setShowInviteModal(true)}
-                                className="btn-primary h-14 px-6 rounded-2xl flex items-center gap-3"
-                            >
-                                <UserPlus size={18} />
-                                Invite Lead
-                            </button>
+        <button
+            onClick={() => setShowInviteModal(true)}
+            className="btn-primary h-14 px-6 rounded-2xl flex items-center gap-3"
+        >
+            <UserPlus size={18}/>
+            Invite Lead
+        </button>
 
-                            <button
-                                onClick={() => setShowDomainLeadsModal(true)}
-                                className="btn-secondary h-14 px-6 rounded-2xl flex items-center gap-3"
-                            >
-                                <FolderKanban size={18} />
-                                Manage Domain Leads
-                            </button>
+        <button
+            onClick={() => setShowDomainLeadsModal(true)}
+            className="btn-secondary h-14 px-6 rounded-2xl flex items-center gap-3"
+        >
+            <FolderKanban size={18}/>
+            Manage Domain Leads
+        </button>
 
-                            <button
-                                onClick={() => setShowManageDevelopersModal(true)}
-                                className="btn-secondary h-14 px-6 rounded-2xl flex items-center gap-3"
-                            >
-                                <Users size={18} />
-                                Manage Developers
-                            </button>
+        <button
+            onClick={() => setShowManageDevelopersModal(true)}
+            className="btn-secondary h-14 px-6 rounded-2xl flex items-center gap-3"
+        >
+            <Users size={18}/>
+            Manage Developers
+        </button>
 
-                            <button
-                                onClick={() => setShowCreateDomainModal(true)}
-                                className="btn-secondary h-14 px-6 rounded-2xl flex items-center gap-3"
-                            >
-                                <Plus size={18} />
-                                Create Domain
-                            </button>
+        <button
+            onClick={() => setShowCreateDomainModal(true)}
+            className="btn-secondary h-14 px-6 rounded-2xl flex items-center gap-3"
+        >
+            <Plus size={18}/>
+            Create Domain
+        </button>
 
-                            <button
-                                onClick={handleCloneWorkspace}
-                                className="btn-secondary h-14 px-6 rounded-2xl flex items-center gap-3"
-                            >
-                                <Copy size={18} />
-                                Clone Workspace
-                            </button>
+        <button
+            onClick={handleCloneWorkspace}
+            className="btn-secondary h-14 px-6 rounded-2xl flex items-center gap-3"
+        >
+            <Copy size={18}/>
+            Clone Workspace
+        </button>
 
-                            <button
-                                onClick={handleExitWorkspace}
-                                className="btn-secondary h-14 px-6 rounded-2xl flex items-center gap-3"
-                            >
-                                <LogOut size={18} />
-                                Exit Workspace
-                            </button>
+        <button
+            onClick={handleExitWorkspace}
+            className="btn-secondary h-14 px-6 rounded-2xl flex items-center gap-3"
+        >
+            <LogOut size={18}/>
+            Exit Workspace
+        </button>
 
-                        </>
+    </>
 
-                    )}
+)}
 
-                    <button
-                        onClick={() => setShowDeleteModal(true)}
-                        className="
-                            h-14
-                            px-6
-                            rounded-2xl
-                            flex
-                            items-center
-                            gap-3
-                            bg-red-500/15
-                            text-red-400
-                            hover:bg-red-500/25
-                            transition
-                        "
-                    >
-                        <Trash2 size={18} />
-                        Delete Workspace
-                    </button>
+<button
+    onClick={() => setShowDeleteModal(true)}
+    className="
+        h-14
+        px-6
+        rounded-2xl
+        flex
+        items-center
+        gap-3
+        bg-red-500/15
+        text-red-400
+        hover:bg-red-500/25
+        transition
+    "
+>
+    <Trash2 size={18}/>
+    Delete Workspace
+</button>
 
                 </div>
 
@@ -296,6 +368,24 @@ function WorkspaceActions({
                     workspace={workspace}
                     onClose={() => setShowDeleteModal(false)}
                     onDelete={handleDeleteWorkspace}
+                />
+
+            )}
+
+            {showExitModal && (
+
+                <ExitWorkspaceModal
+
+                    workspaceId={workspace.id}
+
+                    exitType={exitType}
+
+                    onClose={() =>
+
+                        setShowExitModal(false)
+
+                    }
+
                 />
 
             )}

@@ -484,17 +484,41 @@ async function exitWorkspace(
     userId =
     Number(userId);
 
+    const{
+
+        exit_type
+
+    } = data;
+
     //----------------------------------
-    // GET EXIT TYPE
+    // VALIDATE EXIT TYPE
     //----------------------------------
 
-    const options =
-    await getExitOptions(
+    if(
 
-        workspaceId,
-        userId
+        exit_type !== "DEVELOPER"
 
-    );
+        &&
+
+        exit_type !== "LEAD"
+
+        &&
+
+        exit_type !== "OWNER"
+
+        &&
+
+        exit_type !== "OWNER_AND_LEAD"
+
+    ){
+
+        throw new Error(
+
+            "Invalid exit type."
+
+        );
+
+    }
 
     //----------------------------------
     // DEVELOPER
@@ -502,7 +526,7 @@ async function exitWorkspace(
 
     if(
 
-        options.type ===
+        exit_type ===
         "DEVELOPER"
 
     ){
@@ -524,7 +548,7 @@ async function exitWorkspace(
         return{
 
             message:
-            "Exited workspace successfully"
+            "Exited workspace successfully."
 
         };
 
@@ -536,7 +560,7 @@ async function exitWorkspace(
 
     if(
 
-        options.type ===
+        exit_type ===
         "LEAD"
 
     ){
@@ -563,10 +587,6 @@ async function exitWorkspace(
 
         }
 
-        //----------------------------------
-        // CHANGE EVERY DOMAIN LEAD
-        //----------------------------------
-
         for(
 
             const transfer
@@ -575,11 +595,13 @@ async function exitWorkspace(
 
         ){
 
+            //----------------------------------
+            // VALIDATION
+            //----------------------------------
+
             if(
 
-                !transfer.new_lead_user_id ||
-
-                !transfer.user_type
+                !transfer.new_lead_user_id
 
             ){
 
@@ -590,6 +612,28 @@ async function exitWorkspace(
                 );
 
             }
+
+            if(
+
+                transfer.user_type !== "DEVELOPER"
+
+                &&
+
+                transfer.user_type !== "LEAD"
+
+            ){
+
+                throw new Error(
+
+                    "Invalid user type."
+
+                );
+
+            }
+
+            //----------------------------------
+            // CHANGE DOMAIN LEAD
+            //----------------------------------
 
             await changeDomainLead(
 
@@ -603,10 +647,6 @@ async function exitWorkspace(
                     user_type:
                     transfer.user_type,
 
-                    //----------------------------------
-                    // USER IS EXITING
-                    //----------------------------------
-
                     remove_old_lead:
                     true
 
@@ -617,7 +657,7 @@ async function exitWorkspace(
         }
 
         //----------------------------------
-        // REMOVE USER FROM WORKSPACE
+        // REMOVE USER
         //----------------------------------
 
         await prisma.workspace_members.deleteMany({
@@ -637,7 +677,7 @@ async function exitWorkspace(
         return{
 
             message:
-            "Exited workspace successfully"
+            "Exited workspace successfully."
 
         };
 
@@ -646,13 +686,9 @@ async function exitWorkspace(
     //----------------------------------
     // OWNER
     //----------------------------------
-        //----------------------------------
-    // OWNER
-    //----------------------------------
+        if(
 
-    if(
-
-        options.type ===
+        exit_type ===
         "OWNER"
 
     ){
@@ -662,6 +698,10 @@ async function exitWorkspace(
             new_owner_user_id
 
         } = data;
+
+        //----------------------------------
+        // VALIDATION
+        //----------------------------------
 
         if(
 
@@ -678,7 +718,45 @@ async function exitWorkspace(
         }
 
         //----------------------------------
-        // TRANSFER OWNERSHIP
+        // VERIFY OWNER
+        //----------------------------------
+
+        const newOwner =
+        await prisma.workspace_members.findFirst({
+
+            where:{
+
+                workspace_id:
+                workspaceId,
+
+                user_id:
+                Number(
+                    new_owner_user_id
+                ),
+
+                role:
+                "LEAD"
+
+            }
+
+        });
+
+        if(
+
+            !newOwner
+
+        ){
+
+            throw new Error(
+
+                "Selected user is not a valid lead."
+
+            );
+
+        }
+
+        //----------------------------------
+        // TRANSFER OWNER
         //----------------------------------
 
         await prisma.workspaces.update({
@@ -716,7 +794,7 @@ async function exitWorkspace(
 
     if(
 
-        options.type ===
+        exit_type ===
         "OWNER_AND_LEAD"
 
     ){
@@ -764,7 +842,45 @@ async function exitWorkspace(
         }
 
         //----------------------------------
-        // CHANGE DOMAIN LEADS
+        // VERIFY OWNER
+        //----------------------------------
+
+        const newOwner =
+        await prisma.workspace_members.findFirst({
+
+            where:{
+
+                workspace_id:
+                workspaceId,
+
+                user_id:
+                Number(
+                    new_owner_user_id
+                ),
+
+                role:
+                "LEAD"
+
+            }
+
+        });
+
+        if(
+
+            !newOwner
+
+        ){
+
+            throw new Error(
+
+                "Selected user is not a valid lead."
+
+            );
+
+        }
+
+        //----------------------------------
+        // TRANSFER DOMAIN LEADS
         //----------------------------------
 
         for(
@@ -777,15 +893,31 @@ async function exitWorkspace(
 
             if(
 
-                !transfer.new_lead_user_id ||
-
-                !transfer.user_type
+                !transfer.new_lead_user_id
 
             ){
 
                 throw new Error(
 
                     `Please select a replacement lead for '${transfer.domain_name}'.`
+
+                );
+
+            }
+
+            if(
+
+                transfer.user_type !== "DEVELOPER"
+
+                &&
+
+                transfer.user_type !== "LEAD"
+
+            ){
+
+                throw new Error(
+
+                    "Invalid user type."
 
                 );
 
@@ -802,10 +934,6 @@ async function exitWorkspace(
 
                     user_type:
                     transfer.user_type,
-
-                    //----------------------------------
-                    // EXITING USER
-                    //----------------------------------
 
                     remove_old_lead:
                     true
@@ -869,12 +997,12 @@ async function exitWorkspace(
     }
 
     //----------------------------------
-    // INVALID TYPE
+    // INVALID EXIT TYPE
     //----------------------------------
 
     throw new Error(
 
-        "Invalid exit option."
+        "Invalid exit type."
 
     );
 

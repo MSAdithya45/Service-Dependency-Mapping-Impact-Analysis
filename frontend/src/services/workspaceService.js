@@ -593,3 +593,61 @@ export async function changeDomainLead(
     return response.data;
 
 }
+
+//--------------------------------------------------
+// GET EXIT OPTIONS
+//--------------------------------------------------
+
+export async function getExitOptions(
+
+    workspaceId,
+    exitType
+
+){
+
+    const response =
+    await api.get(
+
+        `/workspace-leave/${workspaceId}/exit-options`,
+
+        {
+
+            params:{
+
+                exit_type:
+                exitType
+
+            }
+
+        }
+
+    );
+
+    return response.data;
+
+}
+
+
+//--------------------------------------------------
+// EXIT WORKSPACE
+//--------------------------------------------------
+
+export async function exitWorkspace(
+
+    workspaceId,
+    data
+
+){
+
+    const response =
+    await api.post(
+
+        `/workspace-leave/${workspaceId}/exit`,
+
+        data
+
+    );
+
+    return response.data;
+
+}
