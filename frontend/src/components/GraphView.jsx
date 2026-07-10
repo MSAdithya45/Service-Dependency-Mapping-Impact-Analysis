@@ -119,7 +119,7 @@ function GraphCanvas({
 
         );
 
-         setFlowNodes(
+                setFlowNodes(
 
             layoutedGraph.nodes.map(
 
@@ -147,11 +147,61 @@ function GraphCanvas({
 
                     const isImpacted =
 
-                    highlightedServices.some(
+                        highlightedServices.some(
 
-                        id => Number(id)===Number(node.id)
+                            id => Number(id)===Number(node.id)
 
-                    );
+                        );
+
+                    let opacity = 1;
+
+                    //----------------------------------
+                    // IMPACT ANALYSIS HAS HIGHER PRIORITY
+                    //----------------------------------
+
+                    if(
+
+                        highlightedServices.length > 0
+
+                    ){
+
+                        opacity =
+
+                            isImpacted || isSelected
+
+                            ?
+
+                            1
+
+                            :
+
+                            0.08;
+
+                    }
+
+                    //----------------------------------
+                    // SEARCH HIGHLIGHTING
+                    //----------------------------------
+
+                    else if(
+
+                        search.trim() !== ""
+
+                    ){
+
+                        opacity =
+
+                            matched
+
+                            ?
+
+                            1
+
+                            :
+
+                            0.08;
+
+                    }
 
                     return{
 
@@ -171,37 +221,7 @@ function GraphCanvas({
 
                             ...node.style,
 
-                            opacity:
-
-                                matched
-
-                                ?
-
-                                (
-
-                                    highlightedServices.length===0
-
-                                    ||
-
-                                    isSelected
-
-                                    ||
-
-                                    isImpacted
-
-                                    ?
-
-                                    1
-
-                                    :
-
-                                    0.25
-
-                                )
-
-                                :
-
-                                0.08
+                            opacity
 
                         }
 
@@ -211,7 +231,7 @@ function GraphCanvas({
 
             )
 
-        );
+);
         console.log("Highlighted Edges:", highlightedEdges);
 
         console.log("Graph Edges:", layoutedGraph.edges);
