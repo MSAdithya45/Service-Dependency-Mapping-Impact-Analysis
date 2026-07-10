@@ -68,16 +68,23 @@ function WorkspaceHeader({
 
     const role =
 
-        roles.includes("OWNER")
-        && roles.includes("LEAD")
+    roles.includes("OWNER") && roles.includes("LEAD")
 
-        ? "OWNER + LEAD"
+    ? "OWNER + LEAD"
 
-        : roles.includes("OWNER")
+    : roles.includes("OWNER")
 
-        ? "OWNER"
+    ? "OWNER"
 
-        : "LEAD";
+    : roles.includes("LEAD")
+
+    ? "LEAD"
+
+    : roles.includes("DEVELOPER")
+
+    ? "DEVELOPER"
+
+    : "UNKNOWN";
 
 
     async function handleRename(){
